@@ -23,16 +23,21 @@ const CameraScreen = () => {
     
     return (
         <View style={{flex:1}}>
-            <Camera style={{flex:1}}>
+            <Camera style={{flex:1}} type={type}>
+                
+
                 <TouchableOpacity style={styles.captureBtn}></TouchableOpacity>
 
                 <View style={styles.header}>
                     <AppIcon AntName="user" color="#eee" size={24}/>
-                    <AppIcon AntName="settings-outline" color="#eee" size={24}/>
+                    <AppIcon AntName="setting" color="#eee" size={24} style={styles.sideIcons}/>
                 </View>
 
                 <View style={styles.sideItems}>
-                    <AppIcon IonName="camera-outline" size={20} color="#eee" style={styles.sideIcons}/>
+                    <AppIcon IonName="camera-outline" size={20} color="#eee" style={styles.sideIcons} 
+                        onPress = {() => {
+                        setType(type === CameraType.back ? CameraType.front : CameraType.back);
+                    }}/>
                     <AppIcon IonName="flash-outline" size={20} color="#eee" style={styles.sideIcons}/>
                     <AppIcon IonName="ios-musical-notes-outline" size={20} color="#eee" style={styles.sideIcons}/>
                 </View>
@@ -68,11 +73,11 @@ const styles = StyleSheet.create({
     },
     captureBtn: {
         position: "absolute",
-        bottom: 10,
+        bottom: 30,
         width: 80,
         height: 80,
         borderRadius: 100,
-        borderBottomColor: "#eee",
+        borderColor: "#e2f3f5",
         borderWidth: 6,
         alignSelf: "center"
     }
