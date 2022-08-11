@@ -1,35 +1,49 @@
-import React, {useState, useEffect, useRef} from "react"
-import { Text, View, TouchableOpacity, StyleSheet, Modal, Image } from 'react-native'
-import { AutoFocus, Camera, CameraType } from 'expo-camera'
+import { useEffect, useState, useRef } from 'react';
+import { StyleSheet, Text, View, Image, TouchableOpacity } from 'react-native';
+import { AutoFocus, Camera, CameraType } from 'expo-camera';
+import { Video } from 'expo-av';
 import AppIcon from "../components/AppIcon"
 
 const CameraScreen = () => {
-    const [allowedCamera, setAllowedCamera] = useState(false)
-    const [type, setType] = useState(CameraType.back)
+    const [hasCameraPermission, setHasCameraPermission] = useState()
+    const [hasMicrophonePermission, setHasMicrophonePermission] = useState()
+    const [cameraType, setCameraType] = useState(CameraType.back)
     const [imageScale, setImageScale] = useState([{scaleX: 1}])
-    const [flashMode, setFlashMode] = useState(Camera.Constants.FlashMode.off)
-    const [imagePreview, setImagePreview] = useState(null)
 
-    const cameraRef = useRef(null)
+    const [flashMode, setFlashMode] = useState(Camera.Constants.FlashMode.off)
+    const [isRecording, setIsRecording] = useState(false)
+
+    const [imagePreview, setImagePreview] = useState()
+    const [videoPreview, setVideoPreview] = useState()
+    
+    let cameraRef = useRef()
+    let videoRef = useRef()
 
     useEffect(() => {
         (async () => {
-            const { status } = await Camera.requestCameraPermissionsAsync()
-            setAllowedCamera(status === 'granted')
-        })()
-    }, [])
+            const cameraPermission = await Camera.requestCameraPermissionsAsync();
+            const microphonePermission = await Camera.requestMicrophonePermissionsAsync();
+            setHasCameraPermission(cameraPermission.status === "granted");
+            setHasMicrophonePermission(microphonePermission.status === "granted");
+        })();
+    }, []);
 
-    const changeCameraType = () => {
-        if (type === CameraType.back) {
-            setType(CameraType.front)
+    if (hasCameraPermission === undefined || hasMicrophonePermission === undefined) {
+        return <Text>Requestion permissions...</Text>
+    } else if (!hasCameraPermission) {
+        return <Text>Permission for camera not granted.</Text>
+    }
+    let changeCameraType = () => {
+        if (cameraType === CameraType.back) {
+            setCameraType(CameraType.front)
             setImageScale([{ scaleX: -1}])
         } else {
-            setType(CameraType.back)
+            setCameraType(CameraType.back)
             setImageScale([{ scaleX: 1}])
         }
     }
 
-    const changeFlashMode = () => {
+    let changeFlashMode = () => {
         console.log(flashMode)
         if (flashMode === Camera.Constants.FlashMode.off) {
             setFlashMode(Camera.Constants.FlashMode.on)
@@ -38,33 +52,40 @@ const CameraScreen = () => {
         }
     }
 
-    
-    const takePicture = async () => {
+    let takePicture = async () => {
         if (!cameraRef) return
 
         try {
-            const pic = await cameraRef.current.takePictureAsync();
-            console.log(pic)
-            setImagePreview(pic.uri)
+            cameraRef.current.takePictureAsync().then((pic) => {
+                console.log(pic)
+                setImagePreview(pic.uri)
+            })
         } catch (error) {
-            console.log("Error taking pic :(", error)
+            console.log("Error taking pic: ", error)
         }
     }
 
-    const closePicture = async () => {
-        setImagePreview(null)
-    }
+    let takeVideo = () => {
+        setIsRecording(true);
 
-    // camera access logic
-    if(allowedCamera === null) {
-        return <View/>
-    }
-    if(allowedCamera === false) {
-        return <Text style={styles.notAllowed}> No Camera Access :( </Text>
-    }
+        cameraRef.current.recordAsync({mirror:cameraType===CameraType.front}).then((recordedVideo) => {
+            setVideoPreview(recordedVideo);
+        });
+    };
+    
+    let stopVideo = () => {
+        setIsRecording(false);
+        cameraRef.current.stopRecording();
+    };
 
+    let closePreview = async () => {
+        setImagePreview(undefined)
+        setVideoPreview(undefined)
+    }
+    // image preview screen
     if (imagePreview){
-        return(
+        console.log("image preview!\n")
+        return (
             <View>
                 <Image source={{uri: imagePreview}} style={{height:"100%", width:"100%", transform: imageScale}}/>
                 
@@ -75,34 +96,65 @@ const CameraScreen = () => {
                 </View>
 
                 <View style={styles.closeBtn}>
-                    <AppIcon AntName="close" size={30} color="#eee" onPress={closePicture}/>
+                    <AppIcon AntName="close" size={30} color="#eee" onPress={closePreview}/>
                 </View>
             </View>
         )
     }
-    
+
+    // video preview screen
+    if (videoPreview) {
+        console.log("video preview!\n")
+        // let shareVideo = () => {
+        //     shareAsync(video.uri).then(() => {
+        //     setVideo(undefined);
+        //     });
+        // };
+
+        // let saveVideo = () => {
+        //   MediaLibrary.saveToLibraryAsync(video.uri).then(() => {
+        //     setVideo(undefined);
+        //   });
+        // };
+
+        return (
+            <View style={{flex:1}}>
+                <Video
+                    ref={videoRef}
+                    style={styles.video}
+                    source={{uri: videoPreview.uri}}
+                    useNativeControls={false}
+                    isLooping
+                    shouldPlay
+                />
+
+                <View style={styles.closeBtn}>
+                        <AppIcon AntName="close" size={30} color="#eee" onPress={closePreview}/>
+                </View>
+            </View>
+        );
+    }
+
     // main camera screen
     return (
-        <View style={{flex:1}}>
-            <Camera style={{flex:1}} 
-                    type={type}
-                    flashMode={flashMode}
-                    autoFocus={AutoFocus.on}
-                    ref={cameraRef}>
-                <TouchableOpacity style={styles.captureBtn} onPress={takePicture}></TouchableOpacity>
+        <Camera style={{flex:1}} 
+                type={cameraType}
+                flashMode={flashMode}
+                autoFocus={AutoFocus.on}
+                ref={cameraRef}>
+            < TouchableOpacity style={styles.captureBtn} onPress={takePicture} onLongPress={takeVideo} onPressOut={stopVideo}/>
 
-                <View style={styles.header}>
-                    <AppIcon AntName="user" color="#eee" size={24}/>
-                    <AppIcon AntName="setting" color="#eee" size={24} style={styles.sideIcons}/>
-                </View>
+            <View style={styles.header}>
+                <AppIcon AntName="user" color="#eee" size={24}/>
+                <AppIcon AntName="setting" color="#eee" size={24} style={styles.sideIcons}/>
+            </View>
 
-                <View style={styles.sideItems}>
-                    <AppIcon IonName="camera-outline" size={20} color="#eee" style={styles.sideIcons} onPress={changeCameraType}/>
-                    <AppIcon IonName="flash-outline" size={20} color="#eee" style={styles.sideIcons} onPress={changeFlashMode}/>
-                    <AppIcon IonName="ios-musical-notes-outline" size={20} color="#eee" style={styles.sideIcons}/>
-                </View>
-            </Camera>
-        </View>
+            <View style={styles.sideItems}>
+                <AppIcon IonName="camera-outline" size={20} color="#eee" style={styles.sideIcons} onPress={changeCameraType}/>
+                <AppIcon IonName="flash-outline" size={20} color="#eee" style={styles.sideIcons} onPress={changeFlashMode}/>
+                <AppIcon IonName="ios-musical-notes-outline" size={20} color="#eee" style={styles.sideIcons}/>
+            </View>
+        </Camera>
     )
 }
 
@@ -157,6 +209,10 @@ const styles = StyleSheet.create({
         position: "absolute",
         top: 40,
         padding: 10
+    },
+    video: {
+        flex: 1,
+        alignSelf: "stretch"
     }
 })
 
