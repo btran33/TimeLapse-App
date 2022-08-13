@@ -31,8 +31,9 @@ const CameraScreen = () => {
     if (hasCameraPermission === undefined || hasMicrophonePermission === undefined) {
         return <Text>Requestion permissions...</Text>
     } else if (!hasCameraPermission) {
-        return <Text>Permission for camera not granted.</Text>
+        return <Text>Permission for camera not granted</Text>
     }
+
     let changeCameraType = () => {
         if (cameraType === CameraType.back) {
             setCameraType(CameraType.front)
@@ -67,8 +68,8 @@ const CameraScreen = () => {
 
     let takeVideo = () => {
         setIsRecording(true);
-
-        cameraRef.current.recordAsync({mirror:cameraType===CameraType.front}).then((recordedVideo) => {
+        // mirror the recording if it's front camera
+        cameraRef.current.recordAsync({mirror: cameraType===CameraType.front}).then((recordedVideo) => {
             setVideoPreview(recordedVideo);
         });
     };
@@ -132,7 +133,7 @@ const CameraScreen = () => {
                         <AppIcon AntName="close" size={30} color="#eee" onPress={closePreview}/>
                 </View>
             </View>
-        );
+        )
     }
 
     // main camera screen
