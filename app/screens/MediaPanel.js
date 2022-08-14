@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import React, { useImperativeHandle, useState, useRef } from 'react';
 import { Text, 
          Image, 
          View, 
@@ -10,14 +10,16 @@ import SlidingUpPanel from 'rn-sliding-up-panel';
 import { FlatList } from 'react-native-gesture-handler';
 import AppIcon from "../components/AppIcon"
 
-const IMGS = [ {key: require('../../assets/man.jpg')}, 
-               {key: require('../../assets/man2.jpg')}, 
-               {key: require('../../assets/woman.jpg')}, 
-               {key: require('../../assets/woman2.jpg')}]
+const IMGS = [ 
+    {"key": require("../../assets/images/man.jpg")}, 
+    {"key": require('../../assets/images/man2.jpg')}, 
+    {"key": require('../../assets/images/woman.jpg')}, 
+    {"key": require('../../assets/images/woman2.jpg')}]
 
-// TODO: pass in saved media like photo, video, timelapses, instead of
-// raw examples
-const MediaPanel = () => {
+// import IMGS from '../../assets/images/images.json'
+
+// TODO: pass in saved media like photo, video, timelapses
+const MediaPanel = React.forwardRef((props, ref) => {
 
     // height is 896
     const {height, width} = Dimensions.get('window')
@@ -39,16 +41,20 @@ const MediaPanel = () => {
             flex: 1,
             marginVertical:20, 
         }
-      }
+    }
+
+    // console.log(IMGS)
 
     const renderImages = ({item}) => {
+        console.log(item, typeof(item), item.key, typeof(item.key))
         return <Image source={item.key} style={{height:height*0.4, width:width*0.44, borderRadius:15, margin:10}} />
     }
 
-    return (
-        <View style={styles.container}>
-            <Button title='Show panel' onPress={() => panel.show()} />
+    useImperativeHandle(ref, () => ({
+        show: () => { panel.show() }
+    }))
 
+    return (
             <SlidingUpPanel ref={c => (panel = c)}
                             draggableRange={{top: height, bottom:0}}
                             snappingPoints={[0, height]}
@@ -63,9 +69,7 @@ const MediaPanel = () => {
                               contentContainerStyle={styles.imageContainer}/>
                 </SafeAreaView>
             </SlidingUpPanel>
-
-        </View>
     )
-}
+})
 
 export default MediaPanel

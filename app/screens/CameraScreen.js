@@ -2,7 +2,11 @@ import { useEffect, useState, useRef } from 'react';
 import { StyleSheet, Text, View, Image, TouchableOpacity } from 'react-native';
 import { AutoFocus, Camera, CameraType } from 'expo-camera';
 import { Video } from 'expo-av';
+
 import AppIcon from "../components/AppIcon"
+import MediaPanel from './MediaPanel';
+
+import IMGS from '../../assets/images/images.json'
 
 const CameraScreen = () => {
     const [hasCameraPermission, setHasCameraPermission] = useState()
@@ -18,7 +22,8 @@ const CameraScreen = () => {
     
     let cameraRef = useRef()
     let videoRef = useRef()
-
+    let panelRef = useRef()
+    
     useEffect(() => {
         (async () => {
             const cameraPermission = await Camera.requestCameraPermissionsAsync();
@@ -138,24 +143,29 @@ const CameraScreen = () => {
 
     // main camera screen
     return (
-        <Camera style={{flex:1}} 
-                type={cameraType}
-                flashMode={flashMode}
-                autoFocus={AutoFocus.on}
-                ref={cameraRef}>
-            < TouchableOpacity style={styles.captureBtn} onPress={takePicture} onLongPress={takeVideo} onPressOut={stopVideo}/>
+        <View style={{flex:1}}>
+            <Camera style={{flex:1}} 
+                    type={cameraType}
+                    flashMode={flashMode}
+                    autoFocus={AutoFocus.on}
+                    ref={cameraRef}>
+                <TouchableOpacity style={styles.captureBtn} onPress={takePicture} onLongPress={takeVideo} onPressOut={stopVideo}/>
+                <AppIcon IonName="images-outline" color="#eee" size={24} style={{position:"absolute", bottom:30, left:20}} onPress={() => panelRef.current.show()} />
 
-            <View style={styles.header}>
-                <AppIcon AntName="user" color="#eee" size={24}/>
-                <AppIcon AntName="setting" color="#eee" size={24} style={styles.sideIcons}/>
-            </View>
+                <View style={styles.header}>
+                    <AppIcon AntName="user" color="#eee" size={24}/>
+                    <AppIcon AntName="setting" color="#eee" size={24} style={styles.sideIcons}/>
+                </View>
 
-            <View style={styles.sideItems}>
-                <AppIcon IonName="camera-outline" size={20} color="#eee" style={styles.sideIcons} onPress={changeCameraType}/>
-                <AppIcon IonName="flash-outline" size={20} color="#eee" style={styles.sideIcons} onPress={changeFlashMode}/>
-                <AppIcon IonName="ios-musical-notes-outline" size={20} color="#eee" style={styles.sideIcons}/>
-            </View>
-        </Camera>
+                <View style={styles.sideItems}>
+                    <AppIcon IonName="camera-outline" size={20} color="#eee" style={styles.sideIcons} onPress={changeCameraType}/>
+                    <AppIcon IonName="flash-outline" size={20} color="#eee" style={styles.sideIcons} onPress={changeFlashMode}/>
+                    <AppIcon IonName="ios-musical-notes-outline" size={20} color="#eee" style={styles.sideIcons}/>
+                </View>
+            </Camera>
+            
+            <MediaPanel ref={panelRef} style={{flex:1}}/>
+        </View>
     )
 }
 
