@@ -6,7 +6,8 @@ import { Video } from 'expo-av';
 import AppIcon from "../components/AppIcon"
 import MediaPanel from './MediaPanel';
 
-import IMGS from '../../assets/images/images.json'
+// TODO: implement export/import local media when capturing media
+const IMGS = [] // empty media array
 
 const CameraScreen = () => {
     const [hasCameraPermission, setHasCameraPermission] = useState()
@@ -50,7 +51,6 @@ const CameraScreen = () => {
     }
 
     let changeFlashMode = () => {
-        console.log(flashMode)
         if (flashMode === Camera.Constants.FlashMode.off) {
             setFlashMode(Camera.Constants.FlashMode.on)
         } else {
@@ -90,7 +90,9 @@ const CameraScreen = () => {
     }
     // image preview screen
     if (imagePreview){
-        console.log("image preview!\n")
+        console.log("image preview! Appending to imgs...\n")
+        IMGS.push({key: imagePreview})
+
         return (
             <View>
                 <Image source={{uri: imagePreview}} style={{height:"100%", width:"100%", transform: imageScale}}/>
@@ -111,6 +113,7 @@ const CameraScreen = () => {
     // video preview screen
     if (videoPreview) {
         console.log("video preview!\n")
+        IMGS.push({key: videoPreview.uri})
         // let shareVideo = () => {
         //     shareAsync(video.uri).then(() => {
         //     setVideo(undefined);
@@ -125,14 +128,17 @@ const CameraScreen = () => {
 
         return (
             <View style={{flex:1}}>
-                <Video
-                    ref={videoRef}
-                    style={styles.video}
-                    source={{uri: videoPreview.uri}}
-                    useNativeControls={false}
-                    isLooping
-                    shouldPlay
-                />
+                <View style={styles.video}>
+                    <Video
+                        ref={videoRef}
+                        style={styles.video}
+                        source={{uri: videoPreview.uri}}
+                        useNativeControls={false}
+                        isLooping
+                        shouldPlay
+                        resizeMode='cover'
+                    />
+                </View>
 
                 <View style={styles.closeBtn}>
                         <AppIcon AntName="close" size={30} color="#eee" onPress={closePreview}/>
@@ -164,7 +170,7 @@ const CameraScreen = () => {
                 </View>
             </Camera>
             
-            <MediaPanel ref={panelRef} style={{flex:1}}/>
+            <MediaPanel ref={panelRef} images={IMGS}/>
         </View>
     )
 }
@@ -223,7 +229,10 @@ const styles = StyleSheet.create({
     },
     video: {
         flex: 1,
-        alignSelf: "stretch"
+        alignSelf: "stretch",
+        borderRadius:15,
+        overflow:'hidden',
+        background:'transparent'
     }
 })
 

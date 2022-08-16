@@ -1,53 +1,65 @@
 import React, { useImperativeHandle, useState, useRef } from 'react';
-import { Text, 
-         Image, 
-         View, 
-         Button,
+import { Image, 
+         StyleSheet, 
+         Text,
+         View,
          TouchableOpacity, 
          Dimensions, 
          SafeAreaView } from 'react-native';
+import { Video } from 'expo-av';
 import SlidingUpPanel from 'rn-sliding-up-panel';
-import { FlatList } from 'react-native-gesture-handler';
-import AppIcon from "../components/AppIcon"
+import InViewPort from '@coffeebeanslabs/react-native-inviewport';
+import { FlatList } from 'react-native-gesture-handler'
+import AppIcon from '../components/AppIcon';
 
-const IMGS = [ 
-    {"key": require("../../assets/images/man.jpg")}, 
-    {"key": require('../../assets/images/man2.jpg')}, 
-    {"key": require('../../assets/images/woman.jpg')}, 
-    {"key": require('../../assets/images/woman2.jpg')}]
-
-// import IMGS from '../../assets/images/images.json'
+const {height, width}= Dimensions.get('window')
 
 // TODO: pass in saved media like photo, video, timelapses
 const MediaPanel = React.forwardRef((props, ref) => {
+    
 
     // height is 896
-    const {height, width} = Dimensions.get('window')
-    let panel = useRef()
+    const [state, setState] = useState({})
 
-    const styles = {
-        container: {
-            flex: 1,
-            backgroundColor: 'white',
-            alignItems: 'center',
-            justifyContent: 'center'
-        },
-        panel: {
-            flex: 1,
-            backgroundColor: "yellow",
-            alignItems: 'center'
-        },
-        imageContainer: {
-            flex: 1,
-            marginVertical:20, 
-        }
+
+    let panel = useRef()
+    let video = useRef()
+
+    let setPlay = async () => {
+        if (video)
+            video.current.playAsync()
     }
 
-    // console.log(IMGS)
+    let setPaused = async () => {
+        if (video)
+            video.current.pauseAsync()
+    }
+
+    let checkVisibile = (isVisible) => {
+        isVisible? setPlay() : setPaused()
+        setState({visible: isVisible})
+    }
+    
 
     const renderImages = ({item}) => {
-        console.log(item, typeof(item), item.key, typeof(item.key))
-        return <Image source={item.key} style={{height:height*0.4, width:width*0.44, borderRadius:15, margin:10}} />
+
+        var fileName = typeof(item.key) !== "number" ? item.key.split('.').pop() : ""// jpg, mov, etc.
+
+        return typeof(item.key) !== "number" ? 
+                fileName === "mov" ? <TouchableOpacity style={styles.imageAndVideo}>
+                                        <InViewPort onChange={isVisible => checkVisibile(isVisible)} style={{flex:1}}>
+                                            <Video style={{flex:1}}
+                                                ref= {video}
+                                                source={{uri: item.key}} 
+                                                paused={setPaused}
+                                                useNativeControls={false}
+                                                isLooping 
+                                                resizeMode='cover'/> 
+                                        </InViewPort>
+
+                                     </TouchableOpacity>  :
+                                     <Image source={{uri: item.key}} style={styles.imageAndVideo}/> :
+                                     <Image source={item.key} style={styles.imageAndVideo} /> // only for numbered keys (i.e from required(_) source)
     }
 
     useImperativeHandle(ref, () => ({
@@ -58,18 +70,63 @@ const MediaPanel = React.forwardRef((props, ref) => {
             <SlidingUpPanel ref={c => (panel = c)}
                             draggableRange={{top: height, bottom:0}}
                             snappingPoints={[0, height]}
-                            friction={0.6}>
+                            friction={0.6}
+                            style={styles.container}>
 
                 <SafeAreaView style={styles.panel}>
-                    <Button title='Hide' onPress={() => panel.hide()} />
                     
-                    <FlatList data={IMGS}
+                    <View style={styles.header}>
+                        <AppIcon AntName="down" size={25} style={{backgroundColor:"white"}} onPress={() => panel.hide()}/>
+
+                        <Text style={styles.title} allowFontScaling>Captures</Text>
+
+                        <AppIcon MaterialName="touch-app" size={25} style={{backgroundColor:"white"}}/>
+                    </View>
+
+                    {/* TODO: extract Flatlist to a separate component where it's reusable to host image/videos/timelapses separately. */}
+                    <FlatList data={props.images}
                               numColumns={2}
                               renderItem={renderImages}
                               contentContainerStyle={styles.imageContainer}/>
                 </SafeAreaView>
             </SlidingUpPanel>
     )
+})
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: 'white',
+        justifyContent: 'center'
+    },
+    panel: {
+        flex: 1,
+        justifyContent:"center",
+        backgroundColor: "white",
+        borderRadius: 15
+    },
+    header:{
+        justifyContent: "space-between",
+        flexDirection: "row",
+        width:"100%"
+    },
+    title :{
+        alignSelf:"center",
+        fontSize:20,
+        fontFamily:"Damascus",
+        fontWeight:"bold"
+    },
+    imageContainer: {
+        flex: 1,
+        marginVertical:20, 
+    },
+    imageAndVideo:{
+        height: height*0.38, 
+        width: width*0.45, 
+        borderRadius: 15, 
+        margin: 10,
+        overflow:"hidden"
+    }
 })
 
 export default MediaPanel
