@@ -63,7 +63,6 @@ const CameraScreen = () => {
 
         try {
             cameraRef.current.takePictureAsync().then((pic) => {
-                console.log(pic)
                 setImagePreview(pic.uri)
             })
         } catch (error) {

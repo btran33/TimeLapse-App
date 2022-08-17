@@ -1,4 +1,4 @@
-import React, { useImperativeHandle, useState, useRef } from 'react';
+import React, { useImperativeHandle, useState, useRef, useEffect } from 'react';
 import { Image, 
          StyleSheet, 
          Text,
@@ -12,15 +12,13 @@ import InViewPort from '@coffeebeanslabs/react-native-inviewport';
 import { FlatList } from 'react-native-gesture-handler'
 import AppIcon from '../components/AppIcon';
 
+// height is 896
 const {height, width}= Dimensions.get('window')
 
 // TODO: pass in saved media like photo, video, timelapses
 const MediaPanel = React.forwardRef((props, ref) => {
-    
 
-    // height is 896
-    const [state, setState] = useState({})
-
+    const [isDrag, setIsDrag] = useState(true)
 
     let panel = useRef()
     let video = useRef()
@@ -37,7 +35,6 @@ const MediaPanel = React.forwardRef((props, ref) => {
 
     let checkVisibile = (isVisible) => {
         isVisible? setPlay() : setPaused()
-        setState({visible: isVisible})
     }
     
 
@@ -53,7 +50,8 @@ const MediaPanel = React.forwardRef((props, ref) => {
                                                 source={{uri: item.key}} 
                                                 paused={setPaused}
                                                 useNativeControls={false}
-                                                isLooping 
+                                                isLooping
+                                                isMuted
                                                 resizeMode='cover'/> 
                                         </InViewPort>
 
@@ -71,7 +69,8 @@ const MediaPanel = React.forwardRef((props, ref) => {
                             draggableRange={{top: height, bottom:0}}
                             snappingPoints={[0, height]}
                             friction={0.6}
-                            style={styles.container}>
+                            style={styles.container}
+                            allowDragging={!isDrag}>
 
                 <SafeAreaView style={styles.panel}>
                     
@@ -85,9 +84,22 @@ const MediaPanel = React.forwardRef((props, ref) => {
 
                     {/* TODO: extract Flatlist to a separate component where it's reusable to host image/videos/timelapses separately. */}
                     <FlatList data={props.images}
-                              numColumns={2}
+                              numRows={2}
                               renderItem={renderImages}
-                              contentContainerStyle={styles.imageContainer}/>
+                              contentContainerStyle={styles.imageContainer}
+                              horizontal
+                              onScrollBeginDrag={() => {setIsDrag(false)}}
+                              onScrollEndDrag={() => {setIsDrag(true)}}
+                              />
+
+                    <FlatList data={props.images}
+                              numRows={2}
+                              renderItem={renderImages}
+                              contentContainerStyle={styles.imageContainer}
+                              horizontal
+                              onScrollBeginDrag={() => {setIsDrag(false)}}
+                              onScrollEndDrag={() => {setIsDrag(true)}}
+                              />
                 </SafeAreaView>
             </SlidingUpPanel>
     )
@@ -117,14 +129,13 @@ const styles = StyleSheet.create({
         fontWeight:"bold"
     },
     imageContainer: {
-        flex: 1,
         marginVertical:20, 
     },
     imageAndVideo:{
         height: height*0.38, 
-        width: width*0.45, 
+        width: width*0.475, 
         borderRadius: 15, 
-        margin: 10,
+        margin: 5,
         overflow:"hidden"
     }
 })
