@@ -46,6 +46,7 @@ const MediaPanel = React.forwardRef((props, ref) => {
                     left: 0,
                     bottom: 0,
                     backgroundColor: "black",
+                    borderRadius:15,
                     transform: [{
                         translateX
                     }]
