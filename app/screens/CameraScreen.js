@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, createRef } from 'react';
 import { StyleSheet, Text, View, Image, TouchableOpacity } from 'react-native';
 import { AutoFocus, Camera, CameraType } from 'expo-camera';
 import { Video } from 'expo-av';
@@ -7,7 +7,9 @@ import AppIcon from "../components/AppIcon"
 import MediaPanel from './MediaPanel';
 
 // TODO: implement export/import local media when capturing media
-const IMGS = [] // empty media array
+const IMGS = [] // empty picture array
+const VIDS = [] // empty video array
+const TLPS  = [] // empty timelapse array
 
 const CameraScreen = () => {
     const [hasCameraPermission, setHasCameraPermission] = useState()
@@ -89,7 +91,7 @@ const CameraScreen = () => {
     }
     // image preview screen
     if (imagePreview){
-        console.log("image preview! Appending to imgs...\n")
+        console.log("image preview!\n")
         IMGS.push({key: imagePreview})
 
         return (
@@ -112,7 +114,7 @@ const CameraScreen = () => {
     // video preview screen
     if (videoPreview) {
         console.log("video preview!\n")
-        IMGS.push({key: videoPreview.uri})
+        VIDS.push({key: videoPreview.uri})
         // let shareVideo = () => {
         //     shareAsync(video.uri).then(() => {
         //     setVideo(undefined);
@@ -169,7 +171,11 @@ const CameraScreen = () => {
                 </View>
             </Camera>
             
-            <MediaPanel ref={panelRef} images={IMGS}/>
+            <MediaPanel ref={panelRef} 
+                        images={{title: "Images",     content: IMGS, key: "image-tabkey",     ref: createRef()}} 
+                        videos={{title: "Videos",     content: VIDS, key: "videos-tabkey",    ref: createRef()}}
+                        timelapses={{title: "Lapses", content: TLPS, key: "timelapse-tabkey", ref: createRef()}}
+            />
         </View>
     )
 }
