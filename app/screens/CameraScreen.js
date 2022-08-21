@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, createRef } from 'react';
-import { StyleSheet, Text, View, Image, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, Image, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { AutoFocus, Camera, CameraType } from 'expo-camera';
 import { Video } from 'expo-av';
 
@@ -10,6 +10,8 @@ import MediaPanel from './MediaPanel';
 const IMGS = [] // empty picture array
 const VIDS = [] // empty video array
 const TLPS  = [] // empty timelapse array
+
+
 
 const CameraScreen = () => {
     const [hasCameraPermission, setHasCameraPermission] = useState()
@@ -22,6 +24,9 @@ const CameraScreen = () => {
 
     const [imagePreview, setImagePreview] = useState()
     const [videoPreview, setVideoPreview] = useState()
+
+    const {width} = useWindowDimensions()
+    const height = Math.round((width * 16) / 9)
     
     let cameraRef = useRef()
     let videoRef = useRef()
@@ -151,11 +156,13 @@ const CameraScreen = () => {
     // main camera screen
     return (
         <View style={{flex:1}}>
-            <Camera style={{flex:1}} 
+            <Camera style={{flex:1, width:"100%", height:height}} 
                     type={cameraType}
                     flashMode={flashMode}
                     autoFocus={AutoFocus.on}
-                    ref={cameraRef}>
+                    ref={cameraRef}
+                    ratio="16:9"
+                    useCamera2Api={true}>
                 <TouchableOpacity style={styles.captureBtn} onPress={takePicture} onLongPress={takeVideo} onPressOut={stopVideo}/>
                 <AppIcon IonName="images-outline" color="#eee" size={24} style={{position:"absolute", bottom:30, left:20}} onPress={() => panelRef.current.show()} />
 
